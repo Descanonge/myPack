@@ -9,8 +9,8 @@ import matplotlib.colors as mc
 import mpl_toolkits.axes_grid1 as axes_grid1
 import matplotlib.ticker as mt
 
-import analysis as mpa
-import _plot_boxes
+import myPack.analysis as mpa
+import myPack._plot_boxes as _plot_boxes
 
 
 def LatFormatter(fmt):
@@ -279,3 +279,38 @@ def get_lin_cmap(values, colors):
     seq += [c(colors[-1])]
 
     return _get_seq_cmap(seq)
+
+
+def align_twin_ticks(ax1, ax2, change2=True, N_ticks=None):
+    """Align ticks of twin axes by changing view limit.
+
+    Deactivate grid
+
+    ax1, ax2: xaxis or yaxis
+    change2: change limits of second axis provided
+    N_ticks: Number of ticks wanted.
+             Defaults to number of ticks on first axis
+    """
+
+    if N_ticks is None:
+        N_ticks = len(ax1.get_ticklocs())
+
+    ax1.set_major_locator(mt.MaxNLocator(N_ticks, min_n_ticks=N_ticks))
+    ax2.set_major_locator(mt.MaxNLocator(N_ticks, min_n_ticks=N_ticks))
+
+    y1_ticks = ax1.get_ticklocs()
+    y2_ticks = ax2.get_ticklocs()
+    ax1.set_major_locator(mt.FixedLocator(y1_ticks))
+    ax2.set_major_locator(mt.FixedLocator(y2_ticks))
+
+    # Left and right positions (1 and 2) to have aligned
+    l1, l2 = y1_ticks[[1, -2]]
+    r1, r2 = y2_ticks[[1, -2]]
+    lmin, lmax = ax1.get_view_interval()
+    rmin, rmax = ax2.get_view_interval()
+
+    rmin = r2 - (r2-r1)/(l2-l1)*(l2-lmin)
+    rmax = r2 - (r2-r1)/(l2-l1)*(l2-lmax)
+    ax2.set_view_interval(rmin, rmax)
+
+    ax2.axes.grid(False)
