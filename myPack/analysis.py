@@ -1,14 +1,15 @@
 """Various convenience analysis functions."""
 
-import numpy as np
 import math
+from bisect import bisect_left
+
+import numpy as np
 import scipy.stats as stats
 import scipy.ndimage as ndimage
 
 import regulargrid.cartesiangrid
 from ._rasterize_polygon import shp_mask as rasterize
 
-from bisect import bisect_left
 
 __all__ = ['rasterize']
 
@@ -60,32 +61,38 @@ def check_mask(mask):
     return ~diff
 
 
-def get_closest(L, elt, find='closest'):
+def get_closest(L, elt, loc='closest'):
     """Return index closest to elt in L.
 
-    L is a sorted list
-    find: 'closest' -> take closest elt
+    L is a ascending sorted list
+    loc: 'closest' -> take closest elt
           'left' -> take closest to the left
           'right' -> take closest to the right
     If two numbers are equally close, return the smallest number.
     """
+
+    loc_opt = ['left', 'right', 'closest']
+    if loc not in loc_opt:
+        raise ValueError(
+            "Invalid loc type. Expected one of: %s" % loc_opt)
+
     pos = bisect_left(L, elt)
     if (pos == 0):
         return pos
     if (pos == len(L)):
         return len(L)-1
 
-    if find == 'closest':
+    if loc == 'closest':
         if (elt - L[pos-1] <= L[pos] - elt):
             return pos-1
         return pos
 
-    if find == 'left':
+    if loc == 'left':
         if (elt == L[pos]):
             return pos
         return pos-1
 
-    if find == 'right':
+    if loc == 'right':
         return pos
 
 

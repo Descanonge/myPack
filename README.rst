@@ -1,2 +1,4 @@
-# python-pack
+myPack
+------
+
 Convenience functions for python
