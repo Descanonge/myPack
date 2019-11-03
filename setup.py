@@ -15,5 +15,5 @@ setup(name='mypack-descanonges',
       author='Clément HAËCK',
       author_email='clement.haeck@postes.net',
       license='',
-      packages=['myPack'],
+      packages=['mypack'],
       install_requires=['regulargrid'])

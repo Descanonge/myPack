@@ -1,3 +1,7 @@
 #+TITLE: myPack
 
 TODO: Check scipy as an alternative for regulargrid
+
+TODO: Fix import of np
+TODO: Up doc
+TODO: Correct pylint warnings
