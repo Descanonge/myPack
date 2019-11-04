@@ -9,8 +9,8 @@ import matplotlib.colors as mc
 import mpl_toolkits.axes_grid1 as axes_grid1
 import matplotlib.ticker as mt
 
-import myPack.analysis as mpa
-import myPack._plot_boxes as _plot_boxes
+import mypack.analysis as mpa
+import mypack._plot_boxes as _plot_boxes
 
 
 def LatFormatter(fmt):
