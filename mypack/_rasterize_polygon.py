@@ -1,12 +1,15 @@
 """Transform a shapely Polygon into a raster.
 
 From github.com/perrette
+http://gist.github.com/perrette/a78f99b76aed54b6babf3597e0b331f8
 """
 
 import numpy as np
 
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+
+import matplotlib.path as mplp
 
 
 def outline_to_mask(line, x, y):
@@ -30,7 +33,6 @@ def outline_to_mask(line, x, y):
     >>> mask = outline_to_mask(poly.boundary, x, y)
 
     """
-    import matplotlib.path as mplp
     mpath = mplp.Path(line)
     X, Y = np.meshgrid(x, y)
     points = np.array((X.flatten(), Y.flatten())).T

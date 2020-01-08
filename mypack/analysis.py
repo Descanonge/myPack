@@ -77,18 +77,18 @@ def get_closest(L, elt, loc='closest'):
             "Invalid loc type. Expected one of: %s" % loc_opt)
 
     pos = bisect_left(L, elt)
-    if (pos == 0):
+    if pos == 0:
         return pos
-    if (pos == len(L)):
+    if pos == len(L):
         return len(L)-1
 
     if loc == 'closest':
-        if (elt - L[pos-1] <= L[pos] - elt):
+        if elt - L[pos-1] <= L[pos] - elt:
             return pos-1
         return pos
 
     if loc == 'left':
-        if (elt == L[pos]):
+        if elt == L[pos]:
             return pos
         return pos-1
 
@@ -107,23 +107,23 @@ def get_intersection_line(p1, a, bl, ur):
 
     # Catch left
     y = p1[1] + (bl[0]-p1[0])*a
-    if y >= bl[1] and y <= ur[1]:
+    if bl[1] <= y <= ur[1]:
         points.add((bl[0], y))
 
     # Catch right
     y = p1[1] + (ur[0]-p1[0])*a
-    if y >= bl[1] and y <= ur[1]:
+    if bl[1] <= y <= ur[1]:
         points.add((ur[0], y))
 
     if a != 0:
         # Catch bottom
         x = p1[0] + (bl[1]-p1[1])/a
-        if x >= bl[0] and x <= ur[0]:
+        if bl[0] <= x <= ur[0]:
             points.add((x, bl[1]))
 
         # Catch top
         x = p1[0] + (ur[1]-p1[1])/a
-        if x >= bl[0] and x <= ur[1]:
+        if bl[0] <= x <= ur[1]:
             points.add((x, ur[1]))
 
     if len(points) > 0:
@@ -160,7 +160,7 @@ def get_zero_dichoto(sig, target=0, t1=0, t2=None):
     while (t2 - t1 > 1) and (ncount < 10000):
         ncount += 1
         t3 = int((t2+t1)/2)
-        if (sigZero[t2]*sigZero[t3] >= 0):
+        if sigZero[t2]*sigZero[t3] >= 0:
             t2 = t3
         else:
             t1 = t3
@@ -168,13 +168,13 @@ def get_zero_dichoto(sig, target=0, t1=0, t2=None):
     return t1
 
 
-def nonlinspace(N, min=0, max=1, slope=2.):
+def nonlinspace(N, xmin=0, xmax=1, slope=2.):
     """Return unvenly space values (more values in middle)."""
     x = np.linspace(-1, 1, N)
     y = np.sinh(slope*x)
     ymin = np.sinh(slope*x[0])
     ymax = np.sinh(slope*x[-1])
-    return (y-ymin)*float(max-min)/(ymax-ymin) + min
+    return (y-ymin)*float(xmax-xmin)/(ymax-ymin) + min
 
 
 def corr(x, y):
@@ -293,9 +293,7 @@ def get_cursor(x, y, pointer, t1=None, t2=None, Xaxis=False):
     (wrong guess sorta work but to avoid)
     """
     if Xaxis:
-        c = y
-        y = x
-        x = c
+        x, y = y, x
 
     if t1 is None:
         t1 = 0
@@ -336,18 +334,58 @@ def enlarge_mask(mask, n_neighbors, axes=None):
 
 
 def regrid(data, limits, *grid, axes=None, **kwargs):
-    """Regrid data on grid.
+    """Regrid data.
 
-    data: n-dimensional array. Additional dimension are treated as stacks
-    limits: [[xmin, xmax], [ymin, ymax], ...]
-    grid: 1D arrays of coordinates
-    axes: axes to work on
-    kwargs passed to scipy.ndimage.map_coordinates
+    For cartesian grids (equal spacing between points).
+    Relies on package RegularGrid by Johannes Buchner [1].
 
-    NOT TESTED FOR DIMENSIONS HIGHER THAN 2
+    Parameters
+    ----------
+    data: Array
+        N-dimensional array to regrid.
+    limits: List[List[float]]
+        Extent of data for each considered coordinate.
+        [[xmin, xmax], [ymin, ymax], ...]
+    grid: Array
+        Coordinates to regrid the data to.
+        Their order is specified in `axes`.
+    axes: List[int]
+        Axes to regrid.
+        Other axes will be stacked, and looped over.
+        If None, the last axes in the array will be
+        selected.
+    kwargs: Any
+        Passed to scipy.ndimage.map_coordinates
+        Defaults 'order' to 1, and 'cval' to np.nan.
+
+    Raises
+    ------
+    IndexError:
+        If the number of axis is wrong.
+
+    Examples
+    --------
+    Lets imagine data consisting of 2D maps, one for each month.
+    Lets change the spatial resolution, using nearest interpolation.
+    >>> import numpy as np
+    ... data = np.rand.random(12, 128, 256)
+    ... limits = [[0, 1], [0, 1]]
+    ...
+    ... new_x = np.linspace(*extent[:2], 256)
+    ... new_y = np.linspace(*extent[2:], 512)
+    ... new_data = regrid(data, extent, new_x, new_y, order=0)
+    >>> print(new_data.shape)
+    (12, 256, 512)
+
+    See also
+    --------
+    scipy.ndimage.map_coordinates
+    .. [1] Python package *regulargrid* by Johannes Buchner, see
+            https://pypi.python.org/pypi/regulargrid/
     """
 
     class CartesianGrid(regulargrid.cartesiangrid.CartesianGrid):
+        """Class with call overwritten to allow kwargs."""
         def __call__(self, *coords, **kwargs):
             # transform coords into pixel values
             coords = np.asarray(coords)
@@ -365,13 +403,17 @@ def regrid(data, limits, *grid, axes=None, **kwargs):
         return grid(*coords, **kwargs).T
 
     ndim = len(grid)
-
     if axes is None:
         axes = list(range(-ndim, 0))
 
+    if len(limits) != ndim:
+        raise ValueError("Extent not of the right shape"
+                         "(%d, expected %s)" % (len(limits), ndim))
+
+    # New shape
     shape = list(data.shape)
-    for i in range(len(axes)):
-        shape[axes[i]] = len(grid[i])
+    for i, ax in enumerate(axes):
+        shape[ax] = len(grid[i])
 
     regrid = np.zeros(shape)
     coords = np.meshgrid(*grid)
