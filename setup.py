@@ -16,4 +16,8 @@ setup(name='mypack-descanonges',
       author_email='clement.haeck@postes.net',
       license='',
       packages=['mypack'],
-      install_requires=['regulargrid'])
+      install_requires=['regulargrid',
+                        'shapely',
+                        'matplotlib',
+                        'numpy',
+                        'scipy'])
