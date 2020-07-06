@@ -38,6 +38,19 @@ def get_gaussian(avg=0, std=1, A=None):
     return lambda x: A * np.exp(-.5*((x-avg)/std)**2)
 
 
+def fit_gaussian(x, y, avg=0, std=1, A=1, **kwargs):
+    """Fit data against a gaussian curve."""
+    def gauss(x, avg, std, A):
+        g = get_gaussian(avg, std, A)
+        return g(x)
+
+    p0 = [avg, std, A]
+
+    coef, _ = scipy.optimize.curve_fit(gauss, x, y, p0, **kwargs)
+
+    return coef
+
+
 def latlon2str(lat=0, lon=0, fmt='(%lat, %lon)', fmtF='.2f'):
     """Format latitude and longitude to string.
 
