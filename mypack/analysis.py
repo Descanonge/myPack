@@ -6,9 +6,12 @@ from bisect import bisect_left
 import numpy as np
 import scipy.stats as stats
 import scipy.ndimage as ndimage
+import scipy.optimize
 
 import regulargrid.cartesiangrid
 from ._rasterize_polygon import shp_mask as rasterize
+
+from .downscale_f import downscale
 
 
 __all__ = ['rasterize']
@@ -49,6 +52,48 @@ def fit_gaussian(x, y, avg=0, std=1, A=1, **kwargs):
     coef, _ = scipy.optimize.curve_fit(gauss, x, y, p0, **kwargs)
 
     return coef
+
+
+def downsample_average(array, x_in, y_in, x_out, y_out, axes=None):
+    """Down sample 2d array by average.
+
+    Parameters
+    ----------
+    array: 2D Array
+        Dimensions corresponding to `x_in` and `x_out`.
+        If more than 2 dimensions, other axes are stacked.
+    x_in, y_in: Sequence[Float]
+        Coordinates of input array (higher res.).
+    x_out, x_out: Sequence[Float]
+        Coordinates of output array (lower res.).
+    axis: List[int]
+        See `do_stack`
+    """
+    ndim = 2
+    if axes is None:
+        axes = list(range(-ndim, 0))
+    lastaxes = list(range(-ndim, 0))
+
+    # Swap axes to the end
+    for i in range(ndim):
+        array = np.swapaxes(array, axes[i], lastaxes[i])
+
+    # Save shape
+    stackshape = array.shape[:-ndim]
+    array = np.reshape(array, (-1, *array.shape[-ndim:]))
+
+    output = downscale.downscale_average_stack(x_in, y_in, x_out, y_out, array)
+    output[~np.isfinite(output)] = 0
+
+    array = np.reshape(array, (*stackshape, *array.shape[-ndim:]))
+    output = np.reshape(output, (*stackshape, *output.shape[-ndim:]))
+
+    # Reswap axes
+    for i in range(ndim):
+        array = np.swapaxes(array, axes[i], lastaxes[i])
+        output = np.swapaxes(output, axes[i], lastaxes[i])
+
+    return output
 
 
 def latlon2str(lat=0, lon=0, fmt='(%lat, %lon)', fmtF='.2f'):
