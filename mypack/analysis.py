@@ -14,6 +14,30 @@ from ._rasterize_polygon import shp_mask as rasterize
 __all__ = ['rasterize']
 
 
+def get_gaussian(avg=0, std=1, A=None):
+    """Return Gauss function.
+
+    Return a gaussian function:
+
+    x -> mode * exp( -1/2 * ((x - avg)/std)**2 )
+    If mode is None, the gaussian is normalized:
+    mode = 1 / (std * sqrt(2*pi))
+
+    Parameters
+    ----------
+    avg: float, optional
+        Mean value.
+    std: float, optional
+        Standard deviation
+    A: float, optional
+        Maximum value, if None, the
+        function is normalized.
+    """
+    if A is None:
+        A = 1./(std*np.sqrt(2*np.pi))
+    return lambda x: A * np.exp(-.5*((x-avg)/std)**2)
+
+
 def latlon2str(lat=0, lon=0, fmt='(%lat, %lon)', fmtF='.2f'):
     """Format latitude and longitude to string.
 
