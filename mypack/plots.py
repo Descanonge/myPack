@@ -281,6 +281,44 @@ def get_lin_cmap(values, colors):
     return _get_seq_cmap(seq)
 
 
+def get_mask_cmap(color, sep=.5, alpha=None, name=None):
+    """Return a colormap for boolean masks.
+
+    Colormap is `color` below `sep`, and transparent above.
+
+    Parameters
+    ----------
+    color: str, List[Float]
+        Identifier for color. Alpha value is replaced by
+        `alpha` if specified.
+    sep: Float, optional
+        Separation between color and transparent.
+    alpha: Float, optional
+        Alpha value for color below separation.
+        Default to the alpha in `color`, usually 1.
+    name: str, optional
+        Name of the cmap.
+    """
+    if name is None:
+        name = 'unif'
+    r, g, b, a = mc.to_rgba(color)
+    if alpha is not None:
+        a = alpha
+
+    cdict = {}
+    cdict['red'] = ((0., r, r),
+                    (1., r, r))
+    cdict['green'] = ((0., g, g),
+                      (1., g, g))
+    cdict['blue'] = ((0., b, b),
+                     (1., b, b))
+    cdict['alpha'] = ((0., 0, 0),
+                      (sep, 0, a),
+                      (1., a, a))
+    cmap = mc.LinearSegmentedColormap(name, cdict)
+    return cmap
+
+
 def align_twin_ticks(ax1, ax2, change2=True, N_ticks=None):
     """Align ticks of twin axes by changing view limit.
 
